@@ -3,42 +3,38 @@ package kz.koshelek.app.ui
 import android.content.ComponentName
 import android.content.Context
 import android.provider.Settings
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kz.koshelek.app.service.BankNotificationListener
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.abs
 
 val Ru: Locale = Locale.forLanguageTag("ru")
-val IncomeColor = Color(0xFF2E9E5B)
-val ExpenseColor = Color(0xFFD9534F)
 
-val ChartColors = listOf(
-    Color(0xFF1E6B52), Color(0xFFF2B233), Color(0xFF3F7CC4), Color(0xFFD9534F), Color(0xFF8E5CC4),
-    Color(0xFF2BA7A0), Color(0xFFE07B39), Color(0xFF6B8E23), Color(0xFFB0577F), Color(0xFF7A7A7A),
-)
-
-@Composable
-fun KoshelekTheme(content: @Composable () -> Unit) {
-    val scheme = if (isSystemInDarkTheme()) {
-        darkColorScheme(primary = Color(0xFF6FD3AE), secondary = Color(0xFFF2B233))
-    } else {
-        lightColorScheme(primary = Color(0xFF1E6B52), secondary = Color(0xFFF2B233))
-    }
-    MaterialTheme(colorScheme = scheme, content = content)
+fun money(v: Double): String {
+    val a = abs(v)
+    val s = if (a % 1.0 == 0.0) String.format(Ru, "%,.0f ₸", a) else String.format(Ru, "%,.2f ₸", a)
+    return if (v < 0) "−$s" else s
 }
 
-fun money(v: Double): String =
-    if (v % 1.0 == 0.0) String.format(Ru, "%,.0f ₸", v) else String.format(Ru, "%,.2f ₸", v)
+/** Короткая запись крупных сумм: 2,48 млн ₸, 420 тыс ₸. */
+fun moneyShort(v: Double): String = when {
+    abs(v) >= 1_000_000 -> String.format(Ru, "%.2f млн ₸", v / 1_000_000)
+    abs(v) >= 10_000 -> String.format(Ru, "%.0f тыс ₸", v / 1_000)
+    else -> money(v)
+}
 
 fun Long.toLocalDate(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneId.systemDefault()).toLocalDate()
 
@@ -46,9 +42,13 @@ val dayFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMMM, EEEE", R
 val timeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm", Ru)
 val dateTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm", Ru)
 val monthFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("LLLL yyyy", Ru)
+val monthShort: DateTimeFormatter = DateTimeFormatter.ofPattern("LLL", Ru)
+val headerDate: DateTimeFormatter = DateTimeFormatter.ofPattern("EEEE, d MMMM", Ru)
 
 fun formatTime(ms: Long, f: DateTimeFormatter): String =
     Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()).format(f)
+
+fun String.cap(): String = replaceFirstChar { it.titlecase(Ru) }
 
 /** Включён ли доступ к уведомлениям для нашего приложения. */
 fun hasNotificationAccess(context: Context): Boolean {
@@ -60,15 +60,29 @@ fun hasNotificationAccess(context: Context): Boolean {
 /** Статус доступа к уведомлениям, обновляется при возвращении в приложение. */
 @Composable
 fun rememberNotificationAccess(): Boolean {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val owner = androidx.lifecycle.compose.LocalLifecycleOwner.current
-    var granted by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(hasNotificationAccess(context)) }
-    androidx.compose.runtime.DisposableEffect(owner) {
-        val obs = androidx.lifecycle.LifecycleEventObserver { _, e ->
-            if (e == androidx.lifecycle.Lifecycle.Event.ON_RESUME) granted = hasNotificationAccess(context)
+    val context = LocalContext.current
+    val owner = LocalLifecycleOwner.current
+    var granted by remember { mutableStateOf(hasNotificationAccess(context)) }
+    DisposableEffect(owner) {
+        val obs = LifecycleEventObserver { _, e ->
+            if (e == Lifecycle.Event.ON_RESUME) granted = hasNotificationAccess(context)
         }
         owner.lifecycle.addObserver(obs)
         onDispose { owner.lifecycle.removeObserver(obs) }
     }
     return granted
+}
+
+/** Настройки приложения: тема и бюджет на месяц. */
+class Prefs(context: Context) {
+    private val sp = context.getSharedPreferences("koshelek", Context.MODE_PRIVATE)
+
+    var theme: AppTheme
+        get() = runCatching { AppTheme.valueOf(sp.getString("theme", null) ?: AppTheme.BLACK.name) }
+            .getOrDefault(AppTheme.BLACK)
+        set(v) = sp.edit().putString("theme", v.name).apply()
+
+    var budget: Double
+        get() = sp.getFloat("budget", 0f).toDouble()
+        set(v) = sp.edit().putFloat("budget", v.toFloat()).apply()
 }

@@ -97,4 +97,14 @@ class NotificationParserTest {
         assertEquals(TxType.INCOME, p("Halyk", "Зачисление перевода 12 000,00 KZT")!!.type)
         assertEquals(TxType.INCOME, p("ForteBank", "Входящий перевод 3 000 KZT")!!.type)
     }
+
+    @Test fun balances() {
+        assertEquals(120350.25, NotificationParser.parseBalance("Kaspi.kz", "Покупка 5 400 ₸ в MAGNUM. Доступно 120 350,25 ₸")!!, 0.001)
+        assertEquals(80000.0, NotificationParser.parseBalance("Halyk Bank", "Оплата: 1 250,50 KZT YANDEX.GO. Остаток: 80 000,00 KZT")!!, 0.001)
+        assertNull(NotificationParser.parseBalance("Kaspi.kz", "Вам поступил перевод 15 000 ₸ от Айгерим Н."))
+    }
+
+    @Test fun salaryCategory() {
+        assertEquals("Зарплата", p("ForteBank", "Зачисление 250 000.00 KZT. Заработная плата")!!.category)
+    }
 }

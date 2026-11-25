@@ -159,6 +159,17 @@ object NotificationParser {
         return clean(title).ifEmpty { "Без названия" }
     }
 
+    /** Остаток на карте из текста («Доступно 120 350 ₸», «Остаток: 80 000 KZT»), если он есть. */
+    fun parseBalance(title: String, text: String): Double? {
+        val full = listOf(title, text).filter { it.isNotBlank() }.joinToString(". ")
+        return findAmounts(full).firstOrNull { isBalance(full, it.start) && !isBonus(full, it.start) }?.value
+    }
+
+    private fun isBonus(text: String, start: Int): Boolean {
+        val before = text.substring(maxOf(0, start - 25), start).lowercase()
+        return "бонус" in before || "лимит" in before
+    }
+
     private fun clean(s: String): String =
         s.trim().trim('.', ',', ':', ';', '-', '—', ' ').replace(Regex("""\s+"""), " ").take(40)
 }
@@ -168,12 +179,14 @@ object Categories {
     const val OTHER = "Другое"
     const val TRANSFERS = "Переводы"
     const val INCOME = "Доход"
+    /** Перевод между своими картами: не считается ни доходом, ни расходом. */
+    const val OWN = "Между своими"
 
     val expense = listOf(
         "Продукты", "Кафе и рестораны", "Транспорт", "Такси", "Покупки", "Связь и интернет",
-        "Коммунальные", "Здоровье", "Развлечения", TRANSFERS, OTHER,
+        "Коммунальные", "Здоровье", "Развлечения", TRANSFERS, OWN, OTHER,
     )
-    val income = listOf(INCOME, TRANSFERS, "Кешбэк", OTHER)
+    val income = listOf(INCOME, "Зарплата", TRANSFERS, "Кешбэк", OWN, OTHER)
 
     private val rules = listOf(
         "Продукты" to listOf("magnum", "магнум", "small", "смолл", "galmart", "anvar", "анвар", "airba", "ramstore", "metro", "toimart", "спар", "spar", "дастархан", "продукт", "market", "маркет", "supermarket"),
@@ -192,6 +205,7 @@ object Categories {
         if (type == TxType.INCOME) {
             return when {
                 "кешбэк" in m || "кэшбэк" in m || "cashback" in m || "бонус" in m -> "Кешбэк"
+                "зарплат" in m || "заработн" in m -> "Зарплата"
                 "перевод" in m -> TRANSFERS
                 else -> INCOME
             }
