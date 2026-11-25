@@ -19,9 +19,9 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
       - name: Тесты распознавания
-        run: ./gradlew testDebugUnitTest --no-daemon
+        run: bash ./gradlew testDebugUnitTest --no-daemon
       - name: Сборка APK
-        run: ./gradlew assembleRelease --no-daemon
+        run: bash ./gradlew assembleRelease --no-daemon
       - name: Переименовать
         run: cp app/build/outputs/apk/release/app-release.apk Koshelek.apk
       - uses: actions/upload-artifact@v4
