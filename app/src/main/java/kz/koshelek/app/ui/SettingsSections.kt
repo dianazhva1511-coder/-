@@ -86,9 +86,9 @@ fun SettingsSections(repo: Repository) {
     PCard {
         Text("С какого числа считать месяц. Удобно, если зарплата приходит, например, 10-го.", color = p.text2, fontSize = 13.sp)
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
-            TextButton(onClick = { AppSettings.setMonthStart(AppSettings.monthStart - 1) }) { Text("−", color = p.primary, fontSize = 22.sp) }
+            TextButton(onClick = { AppSettings.changeMonthStart(AppSettings.monthStart - 1) }) { Text("−", color = p.primary, fontSize = 22.sp) }
             Text("${AppSettings.monthStart}-е число", color = p.text, fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-            TextButton(onClick = { AppSettings.setMonthStart(AppSettings.monthStart + 1) }) { Text("+", color = p.primary, fontSize = 22.sp) }
+            TextButton(onClick = { AppSettings.changeMonthStart(AppSettings.monthStart + 1) }) { Text("+", color = p.primary, fontSize = 22.sp) }
         }
     }
 

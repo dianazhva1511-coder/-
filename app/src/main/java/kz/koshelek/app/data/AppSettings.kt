@@ -131,7 +131,7 @@ object AppSettings {
     }
 
     // Начало месяца
-    fun setMonthStart(day: Int) {
+    fun changeMonthStart(day: Int) {
         monthStart = day.coerceIn(1, 28)
         sp?.edit()?.putInt("monthStart", monthStart)?.apply()
     }
