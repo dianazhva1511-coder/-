@@ -80,7 +80,7 @@ fun OperationsScreen(all: List<Transaction>, onBack: () -> Unit, onOpen: (Transa
             }
             Spacer(Modifier.height(10.dp))
             Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                banks.forEach { b -> Chip(b, bank == b) { bank = b } }
+                banks.forEach { b -> Chip(AppSettings.walletName(b), bank == b) { bank = b } }
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

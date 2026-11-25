@@ -73,8 +73,15 @@ class MainActivity : ComponentActivity() {
         setContent {
             var theme by remember { mutableStateOf(prefs.theme) }
             LaunchedEffect(theme) { applyBars(theme) }
-            KoshelekTheme(theme) {
-                App(prefs, theme) { theme = it; prefs.theme = it }
+            val density = androidx.compose.ui.platform.LocalDensity.current
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(
+                    density.density, density.fontScale * AppSettings.fontScale,
+                ),
+            ) {
+                KoshelekTheme(theme) {
+                    App(prefs, theme) { theme = it; prefs.theme = it }
+                }
             }
         }
     }

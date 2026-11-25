@@ -81,7 +81,7 @@ fun BankBadge(bank: String, size: Dp = 42.dp) {
     val p = LocalPalette.current
     val color = p.bankColor(bank)
     Box(Modifier.size(size).clip(CircleShape).background(color), contentAlignment = Alignment.Center) {
-        Text(bank.take(1).uppercase(), color = onColor(color), fontWeight = FontWeight.ExtraBold, fontSize = (size.value * 0.42f).sp)
+        Text(AppSettings.walletName(bank).take(1).uppercase(), color = onColor(color), fontWeight = FontWeight.ExtraBold, fontSize = (size.value * 0.42f).sp)
     }
 }
 
@@ -227,7 +227,7 @@ fun TransactionRow(t: Transaction, onClick: (() -> Unit)? = null) {
         Column(Modifier.weight(1f)) {
             Text(t.merchant, color = p.text, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
-                "${t.category} · ${t.bank} · ${formatTime(t.timestamp, timeFormat)}",
+                "${t.category} · ${AppSettings.walletName(t.bank)} · ${formatTime(t.timestamp, timeFormat)}",
                 color = p.text2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
             )
         }

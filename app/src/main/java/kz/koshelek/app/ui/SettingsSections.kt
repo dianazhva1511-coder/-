@@ -53,6 +53,7 @@ fun SettingsSections(repo: Repository) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var askName by remember { mutableStateOf<String?>(null) } // "wallet", "expense", "income"
+    var renaming by remember { mutableStateOf<String?>(null) }
     var ruleOpen by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }
     var catTab by remember { mutableIntStateOf(0) }
@@ -81,6 +82,26 @@ fun SettingsSections(repo: Repository) {
         }
     }
 
+    // Размер шрифта
+    Section("Размер шрифта")
+    PCard {
+        Text("Меняет размер всех надписей и сумм в приложении.", color = p.text2, fontSize = 13.sp)
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp)) {
+            TextButton(onClick = { AppSettings.changeFontScale(AppSettings.fontScale - 0.05f) }) { Text("A−", color = p.primary, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+            Text("${(AppSettings.fontScale * 100).toInt()}%", color = p.text, fontWeight = FontWeight.Bold, fontSize = 17.sp, modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            TextButton(onClick = { AppSettings.changeFontScale(AppSettings.fontScale + 0.05f) }) { Text("A+", color = p.primary, fontSize = 18.sp, fontWeight = FontWeight.Bold) }
+        }
+        androidx.compose.material3.Slider(
+            value = AppSettings.fontScale, onValueChange = { AppSettings.changeFontScale(it) },
+            valueRange = 0.8f..1.4f, steps = 11,
+            colors = androidx.compose.material3.SliderDefaults.colors(thumbColor = p.primary, activeTrackColor = p.primary),
+        )
+        Text("Пример: 125 000 ₸ · Продукты · Kaspi", color = p.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+        if (AppSettings.fontScale != 1f) TextButton(onClick = { AppSettings.changeFontScale(1f) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
+            Text("Вернуть обычный размер", color = p.primary)
+        }
+    }
+
     // Начало месяца
     Section("Начало месяца")
     PCard {
@@ -99,13 +120,20 @@ fun SettingsSections(repo: Repository) {
             if (i > 0) HorizontalDivider(color = p.divider)
             val custom = w !in AppSettings.BASE_WALLETS
             ToggleRow(
-                w, if (custom) "своя карта" else null, w !in AppSettings.hiddenWallets,
+                AppSettings.walletName(w),
+                when {
+                    AppSettings.walletName(w) != w -> "было: $w"
+                    custom -> "своя карта"
+                    else -> null
+                },
+                w !in AppSettings.hiddenWallets,
                 onToggle = { AppSettings.setWalletHidden(w, !it) },
                 onDelete = if (custom) ({ AppSettings.removeWallet(w) }) else null,
+                onEdit = { renaming = w },
                 leading = { BankBadge(w, 32.dp) },
             )
         }
-        Text("Выключенные карты не показываются на главной и при добавлении операции.", color = p.text2, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+        Text("Карандаш меняет название карты. Выключенные карты не показываются на главной и при добавлении операции.", color = p.text2, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
     }
 
     // Категории
@@ -183,6 +211,11 @@ fun SettingsSections(repo: Repository) {
             askName = null
         }
     }
+    renaming?.let { w ->
+        NameDialog("Название карты", w, onDismiss = { renaming = null }, initial = AppSettings.walletName(w), confirm = "Сохранить") { name ->
+            AppSettings.renameWallet(w, name); renaming = null
+        }
+    }
     if (ruleOpen) RuleDialog(onDismiss = { ruleOpen = false }) { k, c -> AppSettings.addRule(k, c); ruleOpen = false }
     if (confirmReset) AlertDialog(
         onDismissRequest = { confirmReset = false },
@@ -210,6 +243,7 @@ private fun ToggleRow(
     on: Boolean,
     onToggle: (Boolean) -> Unit,
     onDelete: (() -> Unit)?,
+    onEdit: (() -> Unit)? = null,
     leading: @Composable () -> Unit,
 ) {
     val p = LocalPalette.current
@@ -220,6 +254,7 @@ private fun ToggleRow(
             Text(title, color = if (on) p.text else p.text2, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
             if (subtitle != null) Text(subtitle, color = p.text2, fontSize = 11.sp)
         }
+        if (onEdit != null) IconButton(onClick = onEdit) { Icon(AppIcons.Pencil, "Переименовать", tint = p.text2, modifier = Modifier.size(20.dp)) }
         if (onDelete != null) IconButton(onClick = onDelete) { Icon(AppIcons.Trash, "Удалить", tint = p.text2, modifier = Modifier.size(20.dp)) }
         Switch(
             checked = on, onCheckedChange = onToggle,
@@ -229,13 +264,20 @@ private fun ToggleRow(
 }
 
 @Composable
-private fun NameDialog(title: String, hint: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
-    var text by remember { mutableStateOf("") }
+private fun NameDialog(
+    title: String,
+    hint: String,
+    onDismiss: () -> Unit,
+    initial: String = "",
+    confirm: String = "Добавить",
+    onSave: (String) -> Unit,
+) {
+    var text by remember { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { OutlinedTextField(text, { text = it }, label = { Text("Название") }, placeholder = { Text(hint) }, singleLine = true) },
-        confirmButton = { TextButton(onClick = { if (text.isNotBlank()) onSave(text) }) { Text("Добавить") } },
+        confirmButton = { TextButton(onClick = { if (text.isNotBlank()) onSave(text) }) { Text(confirm) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
     )
 }

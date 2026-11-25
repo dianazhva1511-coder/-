@@ -63,7 +63,7 @@ fun CardScreen(
                 IconButton(onClick = onBack) { Icon(AppIcons.Back, "Назад", tint = p.text) }
                 BankBadge(bank, 34.dp)
                 Spacer(Modifier.width(10.dp))
-                Text(bank, color = p.text, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
+                Text(AppSettings.walletName(bank), color = p.text, fontSize = 26.sp, fontWeight = FontWeight.ExtraBold)
             }
         }
         item {

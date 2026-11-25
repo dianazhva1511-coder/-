@@ -190,7 +190,7 @@ private fun CardTile(bank: String, b: Balance?, m: (Double) -> String, modifier:
     ) {
         Text(b?.let { m(it.amount) } ?: "нет данных", color = on, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
         Column {
-            Text(bank, color = on, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(AppSettings.walletName(bank), color = on, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             Text(b?.let { formatTime(it.updatedAt, dateTimeFormat) } ?: "остаток не пришёл", color = on.copy(alpha = 0.75f), fontSize = 10.sp, maxLines = 1)
         }
     }

@@ -3,6 +3,7 @@ package kz.koshelek.app.data
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -32,6 +33,8 @@ object AppSettings {
     var rules by mutableStateOf(listOf<Rule>()); private set
     var disabledBanks by mutableStateOf(setOf<String>()); private set
     var monthStart by mutableIntStateOf(1); private set
+    var walletNames by mutableStateOf(mapOf<String, String>()); private set
+    var fontScale by mutableFloatStateOf(1f); private set
 
     fun init(context: Context) {
         if (sp != null) return
@@ -48,6 +51,11 @@ object AppSettings {
             if (parts.size == 2) Rule(parts[0], parts[1]) else null
         }
         monthStart = s.getInt("monthStart", 1).coerceIn(1, 28)
+        walletNames = s.list("walletNames").mapNotNull { line ->
+            val parts = line.split('\t')
+            if (parts.size == 2) parts[0] to parts[1] else null
+        }.toMap()
+        fontScale = s.getFloat("fontScale", 1f).coerceIn(0.8f, 1.4f)
     }
 
     private fun SharedPreferences.list(key: String): List<String> =
@@ -102,6 +110,24 @@ object AppSettings {
     fun setWalletHidden(name: String, hidden: Boolean) {
         hiddenWallets = if (hidden) hiddenWallets + name else hiddenWallets - name
         save("hiddenWallets", hiddenWallets)
+    }
+
+    /** Как показывать карту: своё название, если пользователь его задал. "Kaspi · Samsung Pay" тоже переименуется. */
+    fun walletName(bank: String): String {
+        walletNames[bank]?.let { return it }
+        val key = walletNames.keys.firstOrNull { bank.startsWith("$it ") } ?: return bank
+        return walletNames.getValue(key) + bank.removePrefix(key)
+    }
+
+    fun renameWallet(bank: String, name: String) {
+        val n = name.trim()
+        walletNames = if (n.isEmpty() || n == bank) walletNames - bank else walletNames + (bank to n)
+        save("walletNames", walletNames.map { "${it.key}\t${it.value}" })
+    }
+
+    fun changeFontScale(v: Float) {
+        fontScale = (Math.round(v * 20) / 20f).coerceIn(0.8f, 1.4f)
+        sp?.edit()?.putFloat("fontScale", fontScale)?.apply()
     }
 
     // Правила

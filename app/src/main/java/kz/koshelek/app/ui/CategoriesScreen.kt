@@ -82,7 +82,7 @@ fun CategoriesScreen(
         PCard(padding = 12.dp) {
             Grid {
                 banks.forEach { bank ->
-                    Cell(bank, balanceMap[bank]?.let { money(it) } ?: "нет данных", null, onClick = { onEditBalance(bank, balanceMap[bank]) }, labelBelow = true) {
+                    Cell(AppSettings.walletName(bank), balanceMap[bank]?.let { money(it) } ?: "нет данных", null, onClick = { onEditBalance(bank, balanceMap[bank]) }, labelBelow = true) {
                         BankBadge(bank, 54.dp)
                     }
                 }

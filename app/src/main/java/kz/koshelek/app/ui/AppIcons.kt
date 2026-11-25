@@ -56,6 +56,7 @@ object AppIcons {
     val Left = icon("left", "M15 6l-6 6 6 6")
     val Right = icon("right", "M9 6l6 6-6 6")
     val Bell = icon("bell", "M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z", "M10 20a2 2 0 0 0 4 0")
+    val Pencil = icon("pencil", "M4 20h4L19 9l-4-4L4 16z", "M13 7l4 4")
     val Trash = icon("trash", "M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3")
     val Eye = icon("eye", "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z", c(12f, 12f, 3f))
     val Home2 = icon("house", "M4 11l8-7 8 7v9H4z", "M10 20v-5h4v5")

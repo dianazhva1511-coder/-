@@ -103,7 +103,7 @@ fun AddSheet(onDismiss: () -> Unit, onAdd: (Double, TxType, String, String, Stri
             }
             Text("Откуда", color = p.text2, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                AppSettings.allWallets().filter { it !in AppSettings.hiddenWallets }.forEach { w -> Chip(w, wallet == w) { wallet = w } }
+                AppSettings.allWallets().filter { it !in AppSettings.hiddenWallets }.forEach { w -> Chip(AppSettings.walletName(w), wallet == w) { wallet = w } }
             }
             OutlinedTextField(note, { note = it }, Modifier.fillMaxWidth(), label = { Text("Описание (необязательно)") }, singleLine = true)
             Button(
@@ -131,7 +131,7 @@ fun EditTransactionDialog(t: Transaction, onDismiss: () -> Unit, onSave: (Transa
         title = { Text((if (type == TxType.INCOME) "+" else "−") + money(t.amount)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("${t.bank} · ${formatTime(t.timestamp, dateTimeFormat)}", color = p.text2, fontSize = 13.sp)
+                Text("${AppSettings.walletName(t.bank)} · ${formatTime(t.timestamp, dateTimeFormat)}", color = p.text2, fontSize = 13.sp)
                 OutlinedTextField(merchant, { merchant = it }, label = { Text("Описание") }, singleLine = true)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     cats.forEach { c -> Chip(shortName(c), c == category) { category = c } }
