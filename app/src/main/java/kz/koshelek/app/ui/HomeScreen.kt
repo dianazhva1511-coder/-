@@ -1,6 +1,7 @@
 package kz.koshelek.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,10 +48,12 @@ fun HomeScreen(
     onOpenTransaction: (Transaction) -> Unit,
     onGoalClick: (Goal?) -> Unit,
     onSetBudget: () -> Unit,
+    onOpenCard: (String) -> Unit,
 ) {
     val p = LocalPalette.current
     val hasAccess = rememberNotificationAccess()
     var hidden by remember { mutableStateOf(false) }
+    var showCards by remember { mutableStateOf(false) }
     val month = YearMonth.now()
     val inMonth = all.inMonth(month).filter { it.counts }
     val income = inMonth.filter { it.isIncome }.sumOf { it.amount }
@@ -78,18 +81,44 @@ fun HomeScreen(
             }
         }
 
-        // Баланс
+        // Баланс: нажатие раскрывает список карт
         Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(p.hero).padding(20.dp),
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(p.hero)
+                .clickable { showCards = !showCards }.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Всего на картах", color = p.heroText2, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Всего на картах", color = p.heroText2, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text(if (showCards) "Скрыть карты ▴" else "Мои карты ▾", color = p.onHero, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
             Text(
                 if (balances.isEmpty()) "—" else m(onCards),
                 color = p.onHero, fontSize = 36.sp, fontWeight = FontWeight.ExtraBold,
             )
-            if (balances.isEmpty()) {
+            if (balances.isEmpty() && !showCards) {
                 Text("Остаток появится после первой операции по карте", color = p.heroText2, fontSize = 13.sp)
+            }
+            if (showCards) {
+                walletsOf(balances).forEach { bank ->
+                    val b = balances.firstOrNull { it.bank == bank }
+                    Row(
+                        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.heroInner)
+                            .clickable { onOpenCard(bank) }.padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        BankBadge(bank, 34.dp)
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(bank, color = p.onHero, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text(
+                                b?.let { "обновлено " + formatTime(it.updatedAt, dateTimeFormat) } ?: "нет данных",
+                                color = p.heroText2, fontSize = 12.sp,
+                            )
+                        }
+                        Text(b?.let { m(it.amount) } ?: "—", color = p.onHero, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, maxLines = 1)
+                        Text("  ›", color = p.heroText2, fontSize = 16.sp)
+                    }
+                }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 HeroStat("Доход", "+" + m(income), Modifier.weight(1f))
@@ -177,3 +206,7 @@ private fun RingLabel(title: String, value: String, color: androidx.compose.ui.g
     }
 }
 
+
+/** Все кошельки: три банка, наличные и любые другие, у которых есть остаток. */
+fun walletsOf(balances: List<Balance>): List<String> =
+    (listOf("Kaspi", "Halyk", "Forte", "Наличные") + balances.map { it.bank }).distinct()

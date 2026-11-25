@@ -49,6 +49,7 @@ import kz.koshelek.app.ui.AddSheet
 import kz.koshelek.app.ui.AmountDialog
 import kz.koshelek.app.ui.AppIcons
 import kz.koshelek.app.ui.AppTheme
+import kz.koshelek.app.ui.CardScreen
 import kz.koshelek.app.ui.CategoriesScreen
 import kz.koshelek.app.ui.EditTransactionDialog
 import kz.koshelek.app.ui.GoalDialog
@@ -84,7 +85,7 @@ class MainActivity : ComponentActivity() {
 }
 
 private enum class Tab { HOME, STATS, CATEGORIES, REPORT }
-private enum class Sub { NONE, OPERATIONS, SETTINGS, LOG }
+private enum class Sub { NONE, OPERATIONS, SETTINGS, LOG, CARD }
 
 /** Какой диалог открыт для ввода суммы. */
 private sealed class AmountTarget {
@@ -109,6 +110,7 @@ fun App(prefs: Prefs, theme: AppTheme, onTheme: (AppTheme) -> Unit) {
 
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
     var sub by rememberSaveable { mutableStateOf(Sub.NONE) }
+    var card by rememberSaveable { mutableStateOf("") }
     var adding by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Transaction?>(null) }
     var goalDialog by remember { mutableStateOf<Goal?>(null) }
@@ -128,6 +130,13 @@ fun App(prefs: Prefs, theme: AppTheme, onTheme: (AppTheme) -> Unit) {
                         onOpenLog = { sub = Sub.LOG }, onBack = { sub = Sub.NONE },
                     )
                     Sub.LOG -> LogScreen(log, repo, onBack = { sub = Sub.SETTINGS })
+                    Sub.CARD -> {
+                        val bal = balances.firstOrNull { it.bank == card }
+                        CardScreen(
+                            card, bal, transactions, onBack = { sub = Sub.NONE }, onOpen = { editing = it },
+                            onEditBalance = { amountTarget = AmountTarget.BankBalance(card, bal?.amount) },
+                        )
+                    }
                     Sub.NONE -> when (tab) {
                         Tab.HOME -> HomeScreen(
                             transactions, balances, goals, budget,
@@ -136,6 +145,7 @@ fun App(prefs: Prefs, theme: AppTheme, onTheme: (AppTheme) -> Unit) {
                             onOpenTransaction = { editing = it },
                             onGoalClick = { goalDialog = it; goalDialogOpen = true },
                             onSetBudget = { amountTarget = AmountTarget.Budget },
+                            onOpenCard = { card = it; sub = Sub.CARD },
                         )
                         Tab.STATS -> StatsScreen(transactions)
                         Tab.CATEGORIES -> CategoriesScreen(
