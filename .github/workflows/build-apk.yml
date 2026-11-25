@@ -1,0 +1,36 @@
+name: Собрать APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Тесты распознавания
+        run: ./gradlew testDebugUnitTest --no-daemon
+      - name: Сборка APK
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Переименовать
+        run: cp app/build/outputs/apk/release/app-release.apk Koshelek.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Koshelek-apk
+          path: Koshelek.apk
+      - name: Опубликовать в Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Кошелёк, сборка ${{ github.run_number }}
+          files: Koshelek.apk
