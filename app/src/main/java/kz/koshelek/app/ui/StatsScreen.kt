@@ -1,5 +1,6 @@
 package kz.koshelek.app.ui
 
+import kz.koshelek.app.data.AppSettings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,11 +37,13 @@ import java.time.YearMonth
 fun StatsScreen(all: List<Transaction>) {
     val p = LocalPalette.current
     var mode by remember { mutableIntStateOf(0) }
-    var month by remember { mutableStateOf(YearMonth.now()) }
+    var month by remember { mutableStateOf(AppSettings.currentPeriod()) }
     val list = all.inMonth(month).filter { it.counts && it.isIncome == (mode == 1) }
     val total = list.sumOf { it.amount }
     val byCat = list.groupBy { it.category }.mapValues { (_, v) -> v.sumOf { it.amount } }.toList().sortedByDescending { it.second }
-    val days = if (month == YearMonth.now()) LocalDate.now().dayOfMonth else month.lengthOfMonth()
+    val days = if (month == AppSettings.currentPeriod())
+        (java.time.temporal.ChronoUnit.DAYS.between(month.atDay(AppSettings.monthStart), LocalDate.now()) + 1).toInt().coerceAtLeast(1)
+    else month.lengthOfMonth()
 
     Column(
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),

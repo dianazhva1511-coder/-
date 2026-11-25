@@ -1,5 +1,6 @@
 package kz.koshelek.app.ui
 
+import kz.koshelek.app.data.AppSettings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -45,10 +46,10 @@ fun OperationsScreen(all: List<Transaction>, onBack: () -> Unit, onOpen: (Transa
     var query by remember { mutableStateOf("") }
     var bank by remember { mutableStateOf("Все") }
     var type by remember { mutableIntStateOf(0) }
-    val banks = listOf("Все", "Kaspi", "Halyk", "Forte", "Вручную")
+    val banks = listOf("Все") + AppSettings.allWallets().filter { it !in AppSettings.hiddenWallets } + "Вручную"
     val q = query.trim().lowercase()
     val filtered = all.filter { t ->
-        (bank == "Все" || t.bank.startsWith(bank)) &&
+        (bank == "Все" || (bank == "Вручную" && t.source == "MANUAL") || t.bank.startsWith(bank)) &&
             (type == 0 || (type == 1 && !t.isIncome) || (type == 2 && t.isIncome)) &&
             (q.isEmpty() || t.merchant.lowercase().contains(q) || t.category.lowercase().contains(q) ||
                 money(t.amount).replace(" ", "").replace(" ", "").contains(q.replace(" ", "")))

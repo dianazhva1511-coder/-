@@ -47,6 +47,7 @@ fun SettingsScreen(
     onBudget: () -> Unit,
     onOpenLog: () -> Unit,
     onBack: () -> Unit,
+    repo: kz.koshelek.app.data.Repository,
 ) {
     val p = LocalPalette.current
     val context = LocalContext.current
@@ -141,6 +142,8 @@ fun SettingsScreen(
                 )
             }
         }
+
+        SettingsSections(repo)
 
         PCard {
             Text("О приложении", color = p.text, fontWeight = FontWeight.Bold)

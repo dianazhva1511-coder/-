@@ -1,5 +1,6 @@
 package kz.koshelek.app
 
+import kz.koshelek.app.data.AppSettings
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -67,6 +68,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prefs = Prefs(this)
+        AppSettings.init(this)
         applyBars(prefs.theme)
         setContent {
             var theme by remember { mutableStateOf(prefs.theme) }
@@ -127,7 +129,7 @@ fun App(prefs: Prefs, theme: AppTheme, onTheme: (AppTheme) -> Unit) {
                     Sub.OPERATIONS -> OperationsScreen(transactions, onBack = { sub = Sub.NONE }, onOpen = { editing = it })
                     Sub.SETTINGS -> SettingsScreen(
                         theme, budget, onTheme, onBudget = { amountTarget = AmountTarget.Budget },
-                        onOpenLog = { sub = Sub.LOG }, onBack = { sub = Sub.NONE },
+                        onOpenLog = { sub = Sub.LOG }, onBack = { sub = Sub.NONE }, repo = repo,
                     )
                     Sub.LOG -> LogScreen(log, repo, onBack = { sub = Sub.SETTINGS })
                     Sub.CARD -> {

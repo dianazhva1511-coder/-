@@ -2,6 +2,7 @@
 
 package kz.koshelek.app.ui
 
+import kz.koshelek.app.data.AppSettings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -64,7 +65,7 @@ fun AddSheet(onDismiss: () -> Unit, onAdd: (Double, TxType, String, String, Stri
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     val amount = parseAmount(amountText)
-    val cats = (if (type == TxType.INCOME) Categories.income else Categories.expense).filter { it != Categories.OWN }
+    val cats = (if (type == TxType.INCOME) AppSettings.incomeCategories() else AppSettings.expenseCategories()).filter { it != Categories.OWN }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = state, containerColor = if (p.dark) androidx.compose.ui.graphics.Color(0xFF1C1C1E) else androidx.compose.ui.graphics.Color.White) {
         Column(
@@ -102,7 +103,7 @@ fun AddSheet(onDismiss: () -> Unit, onAdd: (Double, TxType, String, String, Stri
             }
             Text("Откуда", color = p.text2, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Kaspi", "Halyk", "Forte", "Наличные").forEach { w -> Chip(w, wallet == w) { wallet = w } }
+                AppSettings.allWallets().filter { it !in AppSettings.hiddenWallets }.forEach { w -> Chip(w, wallet == w) { wallet = w } }
             }
             OutlinedTextField(note, { note = it }, Modifier.fillMaxWidth(), label = { Text("Описание (необязательно)") }, singleLine = true)
             Button(
@@ -123,7 +124,7 @@ fun EditTransactionDialog(t: Transaction, onDismiss: () -> Unit, onSave: (Transa
     var merchant by remember { mutableStateOf(t.merchant) }
     var category by remember { mutableStateOf(t.category) }
     val type = TxType.valueOf(t.type)
-    val cats = ((if (type == TxType.INCOME) Categories.income else Categories.expense) + t.category).distinct()
+    val cats = ((if (type == TxType.INCOME) AppSettings.incomeCategories() else AppSettings.expenseCategories()) + t.category).distinct()
 
     AlertDialog(
         onDismissRequest = onDismiss,

@@ -1,5 +1,6 @@
 package kz.koshelek.app.ui
 
+import kz.koshelek.app.data.AppSettings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,7 +46,7 @@ fun CardScreen(
     onEditBalance: () -> Unit,
 ) {
     val p = LocalPalette.current
-    var month by remember { mutableStateOf(YearMonth.now()) }
+    var month by remember { mutableStateOf(AppSettings.currentPeriod()) }
     val mine = all.filter { it.bank.startsWith(bank, ignoreCase = true) }
     val inMonth = mine.inMonth(month)
     val counted = inMonth.filter { it.counts }

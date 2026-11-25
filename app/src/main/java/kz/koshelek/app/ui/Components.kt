@@ -1,5 +1,6 @@
 package kz.koshelek.app.ui
 
+import kz.koshelek.app.data.AppSettings
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -183,8 +184,11 @@ fun MonthSwitcher(month: YearMonth, onChange: (YearMonth) -> Unit) {
             month.format(monthFormat).cap(), color = p.text, fontSize = 18.sp, fontWeight = FontWeight.Bold,
             modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
-        IconButton(onClick = { onChange(month.plusMonths(1)) }, enabled = month < YearMonth.now()) {
-            Icon(AppIcons.Right, "Следующий месяц", tint = if (month < YearMonth.now()) p.text else p.text2.copy(alpha = 0.3f))
+        if (AppSettings.monthStart > 1) Text(
+            "с ${AppSettings.monthStart}-го", color = p.text2, fontSize = 12.sp,
+        )
+        IconButton(onClick = { onChange(month.plusMonths(1)) }, enabled = month < AppSettings.currentPeriod()) {
+            Icon(AppIcons.Right, "Следующий месяц", tint = if (month < AppSettings.currentPeriod()) p.text else p.text2.copy(alpha = 0.3f))
         }
     }
 }
@@ -246,4 +250,4 @@ fun Bar(progress: Float, color: Color, track: Color, height: Dp = 7.dp) {
 }
 
 /** Месячные суммы. */
-fun List<Transaction>.inMonth(m: YearMonth) = filter { YearMonth.from(it.timestamp.toLocalDate()) == m }
+fun List<Transaction>.inMonth(m: YearMonth) = filter { AppSettings.periodOf(it.timestamp.toLocalDate()) == m }

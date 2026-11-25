@@ -1,5 +1,6 @@
 package kz.koshelek.app.service
 
+import kz.koshelek.app.data.AppSettings
 import android.app.Notification
 import android.content.pm.PackageManager
 import android.service.notification.NotificationListenerService
@@ -35,6 +36,8 @@ class BankNotificationListener : NotificationListenerService() {
 
         val label = appLabel(sbn.packageName)
         val bank = NotificationParser.detectBank(sbn.packageName, label, title) ?: return
+        AppSettings.init(applicationContext)
+        if (!AppSettings.isTracked(bank)) return
         val time = if (sbn.postTime > 0) sbn.postTime else System.currentTimeMillis()
 
         scope.launch {

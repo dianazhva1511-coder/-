@@ -68,7 +68,7 @@ class Repository(context: Context) {
                             !it.bank.startsWith(bank) && !isWallet(it.bank) &&
                             it.category != Categories.OWN && it.source == "AUTO"
                     }
-                    val category = if (mirror != null) Categories.OWN else parsed.category
+                    val category = if (mirror != null) Categories.OWN else AppSettings.ruleCategory(parsed.merchant, raw) ?: parsed.category
                     if (mirror != null) db.transactions().update(mirror.copy(category = Categories.OWN))
                     db.transactions().insert(
                         Transaction(
@@ -101,6 +101,22 @@ class Repository(context: Context) {
     suspend fun update(t: Transaction) = db.transactions().update(t)
     suspend fun delete(id: Long) = db.transactions().delete(id)
     suspend fun clearLog() = db.rawNotifications().clear()
+
+    /** Удалить все операции (остатки, цели и лимиты остаются). */
+    suspend fun deleteAllTransactions() = db.transactions().deleteAll()
+
+    /** Применить правила «магазин → категория» к уже сохранённым операциям. Возвращает число изменённых. */
+    suspend fun applyRulesToAll(): Int {
+        var n = 0
+        db.transactions().between(0, Long.MAX_VALUE).forEach { t ->
+            if (t.category == Categories.OWN) return@forEach
+            val c = AppSettings.ruleCategory(t.merchant, t.rawText.orEmpty()) ?: return@forEach
+            if (c != t.category) { db.transactions().update(t.copy(category = c)); n++ }
+        }
+        return n
+    }
+
+    suspend fun allTransactions(): List<Transaction> = db.transactions().between(0, Long.MAX_VALUE)
 
     suspend fun addGoal(name: String, target: Double) = db.extras().insertGoal(Goal(0, name, target, 0.0))
     suspend fun updateGoal(g: Goal) = db.extras().updateGoal(g)

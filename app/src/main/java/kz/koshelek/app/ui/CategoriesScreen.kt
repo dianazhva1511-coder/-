@@ -2,6 +2,7 @@
 
 package kz.koshelek.app.ui
 
+import kz.koshelek.app.data.AppSettings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,13 +50,13 @@ fun CategoriesScreen(
     onEditBudget: () -> Unit,
 ) {
     val p = LocalPalette.current
-    var month by remember { mutableStateOf(YearMonth.now()) }
+    var month by remember { mutableStateOf(AppSettings.currentPeriod()) }
     val list = all.inMonth(month).filter { it.counts }
     val incomeBy = list.filter { it.isIncome }.groupBy { it.category }.mapValues { (_, v) -> v.sumOf { it.amount } }
     val expenseBy = list.filter { !it.isIncome }.groupBy { it.category }.mapValues { (_, v) -> v.sumOf { it.amount } }
     val limitMap = limits.associate { it.category to it.amount }
-    val incomeCats = (Categories.income.filter { it != Categories.OWN && it != Categories.OTHER } + incomeBy.keys).distinct()
-    val expenseCats = (Categories.expense.filter { it != Categories.OWN } + expenseBy.keys).distinct()
+    val incomeCats = (AppSettings.incomeCategories().filter { it != Categories.OWN && it != Categories.OTHER } + incomeBy.keys).distinct()
+    val expenseCats = (AppSettings.expenseCategories().filter { it != Categories.OWN } + expenseBy.keys).distinct()
     val banks = walletsOf(balances)
     val balanceMap = balances.associate { it.bank to it.amount }
 

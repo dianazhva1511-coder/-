@@ -1,5 +1,6 @@
 package kz.koshelek.app.ui
 
+import kz.koshelek.app.data.AppSettings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,7 +37,7 @@ fun ReportScreen(all: List<Transaction>) {
     val p = LocalPalette.current
     var period by remember { mutableIntStateOf(1) }
     val monthsCount = listOf(3, 6, 12)[period]
-    val now = YearMonth.now()
+    val now = AppSettings.currentPeriod()
     val months = (monthsCount - 1 downTo 0).map { now.minusMonths(it.toLong()) }
     val counted = all.filter { it.counts }
     val incomes = months.map { m -> counted.inMonth(m).filter { it.isIncome }.sumOf { it.amount } }

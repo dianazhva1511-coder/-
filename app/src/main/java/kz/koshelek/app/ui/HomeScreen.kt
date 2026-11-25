@@ -1,5 +1,6 @@
 package kz.koshelek.app.ui
 
+import kz.koshelek.app.data.AppSettings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -54,7 +55,7 @@ fun HomeScreen(
     val hasAccess = rememberNotificationAccess()
     var hidden by remember { mutableStateOf(false) }
     var showCards by remember { mutableStateOf(false) }
-    val month = YearMonth.now()
+    val month = AppSettings.currentPeriod()
     val inMonth = all.inMonth(month).filter { it.counts }
     val income = inMonth.filter { it.isIncome }.sumOf { it.amount }
     val expense = inMonth.filter { !it.isIncome }.sumOf { it.amount }
@@ -215,5 +216,4 @@ private fun RingLabel(title: String, value: String, color: androidx.compose.ui.g
 
 
 /** Все кошельки: три банка, наличные и любые другие, у которых есть остаток. */
-fun walletsOf(balances: List<Balance>): List<String> =
-    (listOf("Kaspi", "Halyk", "Forte", "Наличные") + balances.map { it.bank }).distinct()
+fun walletsOf(balances: List<Balance>): List<String> = AppSettings.wallets(balances)
