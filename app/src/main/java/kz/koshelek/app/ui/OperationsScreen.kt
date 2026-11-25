@@ -71,7 +71,7 @@ fun OperationsScreen(all: List<Transaction>, onBack: () -> Unit, onOpen: (Transa
                     if (query.isEmpty()) Text("Поиск: магазин, сумма, категория", color = p.text2, fontSize = 15.sp)
                     BasicTextField(
                         query, { query = it }, singleLine = true,
-                        textStyle = TextStyle(color = p.text, fontSize = 15.sp),
+                        textStyle = TextStyle(fontFamily = AppFont, color = p.text, fontSize = 15.sp),
                         cursorBrush = SolidColor(p.primary),
                         modifier = Modifier.fillMaxWidth(),
                     )

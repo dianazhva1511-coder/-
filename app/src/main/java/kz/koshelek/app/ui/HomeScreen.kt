@@ -99,24 +99,12 @@ fun HomeScreen(
                 Text("Остаток появится после первой операции по карте", color = p.heroText2, fontSize = 13.sp)
             }
             if (showCards) {
-                walletsOf(balances).forEach { bank ->
-                    val b = balances.firstOrNull { it.bank == bank }
-                    Row(
-                        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(p.heroInner)
-                            .clickable { onOpenCard(bank) }.padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        BankBadge(bank, 34.dp)
-                        Spacer(Modifier.width(10.dp))
-                        Column(Modifier.weight(1f)) {
-                            Text(bank, color = p.onHero, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                            Text(
-                                b?.let { "обновлено " + formatTime(it.updatedAt, dateTimeFormat) } ?: "нет данных",
-                                color = p.heroText2, fontSize = 12.sp,
-                            )
+                walletsOf(balances).chunked(2).forEach { pair ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        pair.forEach { bank ->
+                            CardTile(bank, balances.firstOrNull { it.bank == bank }, ::m, Modifier.weight(1f)) { onOpenCard(bank) }
                         }
-                        Text(b?.let { m(it.amount) } ?: "—", color = p.onHero, fontWeight = FontWeight.ExtraBold, fontSize = 16.sp, maxLines = 1)
-                        Text("  ›", color = p.heroText2, fontSize = 16.sp)
+                        if (pair.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
             }
@@ -185,6 +173,25 @@ fun HomeScreen(
             }
         }
         Spacer(Modifier.height(24.dp))
+    }
+}
+
+/** Мини-карта: цвет банка, остаток и снизу название карты. */
+@Composable
+private fun CardTile(bank: String, b: Balance?, m: (Double) -> String, modifier: Modifier, onClick: () -> Unit) {
+    val p = LocalPalette.current
+    val c = p.bankColor(bank)
+    val on = onColor(c)
+    Column(
+        modifier.height(104.dp).clip(RoundedCornerShape(18.dp)).background(c).clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(b?.let { m(it.amount) } ?: "нет данных", color = on, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        Column {
+            Text(bank, color = on, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(b?.let { formatTime(it.updatedAt, dateTimeFormat) } ?: "остаток не пришёл", color = on.copy(alpha = 0.75f), fontSize = 10.sp, maxLines = 1)
+        }
     }
 }
 

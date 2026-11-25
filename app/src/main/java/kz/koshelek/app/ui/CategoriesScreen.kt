@@ -56,7 +56,7 @@ fun CategoriesScreen(
     val limitMap = limits.associate { it.category to it.amount }
     val incomeCats = (Categories.income.filter { it != Categories.OWN && it != Categories.OTHER } + incomeBy.keys).distinct()
     val expenseCats = (Categories.expense.filter { it != Categories.OWN } + expenseBy.keys).distinct()
-    val banks = (listOf("Kaspi", "Halyk", "Forte") + balances.map { it.bank }).distinct()
+    val banks = walletsOf(balances)
     val balanceMap = balances.associate { it.bank to it.amount }
 
     Column(
@@ -81,7 +81,7 @@ fun CategoriesScreen(
         PCard(padding = 12.dp) {
             Grid {
                 banks.forEach { bank ->
-                    Cell(bank, balanceMap[bank]?.let { money(it) } ?: "нет данных", null, onClick = { onEditBalance(bank, balanceMap[bank]) }) {
+                    Cell(bank, balanceMap[bank]?.let { money(it) } ?: "нет данных", null, onClick = { onEditBalance(bank, balanceMap[bank]) }, labelBelow = true) {
                         BankBadge(bank, 54.dp)
                     }
                 }
@@ -150,15 +150,17 @@ private fun Cell(
     value: String,
     note: Pair<String, androidx.compose.ui.graphics.Color>?,
     onClick: (() -> Unit)? = null,
+    labelBelow: Boolean = false,
     icon: @Composable () -> Unit,
 ) {
     val p = LocalPalette.current
     var m = Modifier.width(80.dp).clip(RoundedCornerShape(14.dp))
     if (onClick != null) m = m.clickable(onClick = onClick)
     Column(m.padding(vertical = 4.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(5.dp)) {
-        Text(label, color = p.text2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+        if (!labelBelow) Text(label, color = p.text2, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
         icon()
-        Text(value, color = p.text, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.Center)
+        Text(value, color = p.text, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, textAlign = TextAlign.Center)
+        if (labelBelow) Text(label, color = p.text2, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
         if (note != null) Text(note.first, color = note.second, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, textAlign = TextAlign.Center)
     }
 }

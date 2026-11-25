@@ -1,6 +1,11 @@
 package kz.koshelek.app.ui
 
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import kz.koshelek.app.R
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -122,7 +127,7 @@ fun KoshelekTheme(theme: AppTheme, content: @Composable () -> Unit) {
         )
     }
     CompositionLocalProvider(LocalPalette provides p) {
-        MaterialTheme(colorScheme = scheme, content = content)
+        MaterialTheme(colorScheme = scheme, typography = AppTypography, content = content)
     }
 }
 
@@ -152,4 +157,26 @@ fun Palette.bankColor(bank: String): Color {
         "samsung" in b -> Color(0xFF0A84FF)
         else -> categoryColors[9]
     }
+}
+
+/** Шрифт приложения: Unbounded (есть кириллица и знак ₸). */
+val AppFont = FontFamily(
+    Font(R.font.unbounded_regular, FontWeight.Normal),
+    Font(R.font.unbounded_regular, FontWeight.Medium),
+    Font(R.font.unbounded_semibold, FontWeight.SemiBold),
+    Font(R.font.unbounded_bold, FontWeight.Bold),
+    Font(R.font.unbounded_extrabold, FontWeight.ExtraBold),
+)
+
+private val AppTypography = Typography().run {
+    Typography(
+        displayLarge = displayLarge.copy(fontFamily = AppFont), displayMedium = displayMedium.copy(fontFamily = AppFont),
+        displaySmall = displaySmall.copy(fontFamily = AppFont), headlineLarge = headlineLarge.copy(fontFamily = AppFont),
+        headlineMedium = headlineMedium.copy(fontFamily = AppFont), headlineSmall = headlineSmall.copy(fontFamily = AppFont),
+        titleLarge = titleLarge.copy(fontFamily = AppFont), titleMedium = titleMedium.copy(fontFamily = AppFont),
+        titleSmall = titleSmall.copy(fontFamily = AppFont), bodyLarge = bodyLarge.copy(fontFamily = AppFont),
+        bodyMedium = bodyMedium.copy(fontFamily = AppFont), bodySmall = bodySmall.copy(fontFamily = AppFont),
+        labelLarge = labelLarge.copy(fontFamily = AppFont), labelMedium = labelMedium.copy(fontFamily = AppFont),
+        labelSmall = labelSmall.copy(fontFamily = AppFont),
+    )
 }

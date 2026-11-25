@@ -79,7 +79,7 @@ fun AddSheet(onDismiss: () -> Unit, onAdd: (Double, TxType, String, String, Stri
                 amountText, { amountText = it },
                 modifier = Modifier.fillMaxWidth().focusRequester(focus),
                 placeholder = { Text("0 ₸", fontSize = 34.sp, color = p.text2, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) },
-                textStyle = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.ExtraBold, color = if (type == TxType.EXPENSE) p.expense else p.income, textAlign = TextAlign.Center),
+                textStyle = TextStyle(fontFamily = AppFont, fontSize = 34.sp, fontWeight = FontWeight.ExtraBold, color = if (type == TxType.EXPENSE) p.expense else p.income, textAlign = TextAlign.Center),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
             )

@@ -142,6 +142,13 @@ fun SettingsScreen(
             }
         }
 
+        PCard {
+            Text("О приложении", color = p.text, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(4.dp))
+            Text("Кошелёк, версия ${appVersion(context)}", color = p.text2, fontSize = 14.sp)
+            Text("Автор: Adilbek Kairbekov", color = p.text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        }
+
         Text(
             "Все данные хранятся только на этом телефоне. У приложения нет доступа в интернет.",
             color = p.text2, fontSize = 12.sp, modifier = Modifier.padding(4.dp),
@@ -157,3 +164,6 @@ private fun ActionButton(label: String, onClick: () -> Unit) {
         Modifier.clip(RoundedCornerShape(14.dp)).background(p.primary).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
     ) { Text(label, color = p.onPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
 }
+
+private fun appVersion(context: android.content.Context): String =
+    runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: ""
