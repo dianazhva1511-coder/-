@@ -79,4 +79,22 @@ class NotificationParserTest {
         assertEquals("Forte", NotificationParser.detectBank("kz.some.unknown", "ForteBank", ""))
         assertNull(NotificationParser.detectBank("org.telegram.messenger", "Telegram", "Kaspi"))
     }
+
+    @Test fun qrPayments() {
+        val a = p("Kaspi.kz", "Оплата по QR 2 500 ₸ Shawarma House. Доступно 40 000 ₸")!!
+        assertEquals(TxType.EXPENSE, a.type); assertEquals(2500.0, a.amount, 0.001)
+        val b = p("Halyk", "Kaspi QR: покупка 1 800 KZT, ИП Асанов")!!
+        assertEquals(TxType.EXPENSE, b.type)
+        val c = p("ForteBank", "Оплата QR 3 200,00 KZT. Остаток 10 000,00 KZT")!!
+        assertEquals(3200.0, c.amount, 0.001)
+    }
+
+    @Test fun transfersBothWays() {
+        assertEquals(TxType.EXPENSE, p("Kaspi.kz", "Перевод 5 000 ₸ Ерлан С.")!!.type)
+        assertEquals(TxType.EXPENSE, p("Halyk", "Перевод на карту 10 000 KZT выполнен")!!.type)
+        assertEquals(TxType.EXPENSE, p("ForteBank", "Списание 7 000 KZT: перевод по номеру телефона")!!.type)
+        assertEquals(TxType.INCOME, p("Kaspi.kz", "Пополнение 20 000 ₸ от Динара К.")!!.type)
+        assertEquals(TxType.INCOME, p("Halyk", "Зачисление перевода 12 000,00 KZT")!!.type)
+        assertEquals(TxType.INCOME, p("ForteBank", "Входящий перевод 3 000 KZT")!!.type)
+    }
 }
