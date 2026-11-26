@@ -35,6 +35,7 @@ object AppSettings {
     var monthStart by mutableIntStateOf(1); private set
     var walletNames by mutableStateOf(mapOf<String, String>()); private set
     var fontScale by mutableFloatStateOf(1f); private set
+    var lockEnabled by mutableStateOf(true); private set
 
     fun init(context: Context) {
         if (sp != null) return
@@ -56,6 +57,7 @@ object AppSettings {
             if (parts.size == 2) parts[0] to parts[1] else null
         }.toMap()
         fontScale = s.getFloat("fontScale", 1f).coerceIn(0.8f, 1.4f)
+        lockEnabled = s.getBoolean("lockEnabled", true)
     }
 
     private fun SharedPreferences.list(key: String): List<String> =
@@ -123,6 +125,11 @@ object AppSettings {
         val n = name.trim()
         walletNames = if (n.isEmpty() || n == bank) walletNames - bank else walletNames + (bank to n)
         save("walletNames", walletNames.map { "${it.key}\t${it.value}" })
+    }
+
+    fun changeLock(on: Boolean) {
+        lockEnabled = on
+        sp?.edit()?.putBoolean("lockEnabled", on)?.apply()
     }
 
     fun changeFontScale(v: Float) {

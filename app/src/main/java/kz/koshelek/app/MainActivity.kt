@@ -2,7 +2,7 @@ package kz.koshelek.app
 
 import kz.koshelek.app.data.AppSettings
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -50,7 +50,9 @@ import kz.koshelek.app.ui.AddSheet
 import kz.koshelek.app.ui.AmountDialog
 import kz.koshelek.app.ui.AppIcons
 import kz.koshelek.app.ui.AppTheme
+import kz.koshelek.app.ui.Biometric
 import kz.koshelek.app.ui.CardScreen
+import kz.koshelek.app.ui.findActivity
 import kz.koshelek.app.ui.CategoriesScreen
 import kz.koshelek.app.ui.EditTransactionDialog
 import kz.koshelek.app.ui.GoalDialog
@@ -64,11 +66,27 @@ import kz.koshelek.app.ui.ReportScreen
 import kz.koshelek.app.ui.SettingsScreen
 import kz.koshelek.app.ui.StatsScreen
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
+    private var locked by mutableStateOf(false)
+    private var stoppedAt = 0L
+
+    override fun onStart() {
+        super.onStart()
+        if (stoppedAt > 0 && System.currentTimeMillis() - stoppedAt > 30_000 && lockNeeded()) locked = true
+    }
+
+    override fun onStop() {
+        super.onStop()
+        stoppedAt = System.currentTimeMillis()
+    }
+
+    private fun lockNeeded() = AppSettings.lockEnabled && kz.koshelek.app.ui.Biometric.available(this)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prefs = Prefs(this)
         AppSettings.init(this)
+        locked = lockNeeded()
         applyBars(prefs.theme)
         setContent {
             var theme by remember { mutableStateOf(prefs.theme) }
@@ -80,7 +98,8 @@ class MainActivity : ComponentActivity() {
                 ),
             ) {
                 KoshelekTheme(theme) {
-                    App(prefs, theme) { theme = it; prefs.theme = it }
+                    if (locked) LockScreen { locked = false }
+                    else App(prefs, theme) { theme = it; prefs.theme = it }
                 }
             }
         }
@@ -90,6 +109,27 @@ class MainActivity : ComponentActivity() {
         val t = android.graphics.Color.TRANSPARENT
         if (theme == AppTheme.LIGHT) enableEdgeToEdge(SystemBarStyle.light(t, t), SystemBarStyle.light(t, t))
         else enableEdgeToEdge(SystemBarStyle.dark(t), SystemBarStyle.dark(t))
+    }
+}
+
+@Composable
+private fun LockScreen(onUnlock: () -> Unit) {
+    val p = LocalPalette.current
+    val activity = LocalContext.current.findActivity()
+    fun ask() { activity?.let { Biometric.ask(it, "Вход в Кошелёк", "Приложите палец к сканеру", onSuccess = onUnlock) } ?: onUnlock() }
+    LaunchedEffect(Unit) { ask() }
+    Box(Modifier.fillMaxSize().background(p.bg), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Box(Modifier.size(88.dp).clip(CircleShape).background(p.chip), contentAlignment = Alignment.Center) {
+                Icon(AppIcons.Fingerprint, null, tint = p.primary, modifier = Modifier.size(48.dp))
+            }
+            Text("Кошелёк закрыт", color = p.text, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Подтвердите отпечатком пальца", color = p.text2, fontSize = 14.sp)
+            Box(
+                Modifier.clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp)).background(p.primary)
+                    .clickable { ask() }.padding(horizontal = 24.dp, vertical = 14.dp),
+            ) { Text("Открыть", color = p.onPrimary, fontWeight = FontWeight.Bold) }
+        }
     }
 }
 
@@ -109,6 +149,13 @@ fun App(prefs: Prefs, theme: AppTheme, onTheme: (AppTheme) -> Unit) {
     val context = LocalContext.current
     val repo = remember { Repository(context.applicationContext) }
     val scope = rememberCoroutineScope()
+    val activity = context.findActivity()
+    /** Изменить остаток можно только после отпечатка. */
+    fun secureBalance(bank: String, current: Double?) {
+        val open = { amountTarget = AmountTarget.BankBalance(bank, current) }
+        if (activity == null) open()
+        else Biometric.ask(activity, "Изменить остаток", "Подтвердите отпечатком: ${AppSettings.walletName(bank)}", onSuccess = open)
+    }
 
     val transactions by repo.transactions.collectAsState(initial = emptyList())
     val log by repo.rawNotifications.collectAsState(initial = emptyList())
@@ -143,7 +190,7 @@ fun App(prefs: Prefs, theme: AppTheme, onTheme: (AppTheme) -> Unit) {
                         val bal = balances.firstOrNull { it.bank == card }
                         CardScreen(
                             card, bal, transactions, onBack = { sub = Sub.NONE }, onOpen = { editing = it },
-                            onEditBalance = { amountTarget = AmountTarget.BankBalance(card, bal?.amount) },
+                            onEditBalance = { secureBalance(card, bal?.amount) },
                         )
                     }
                     Sub.NONE -> when (tab) {
@@ -155,12 +202,13 @@ fun App(prefs: Prefs, theme: AppTheme, onTheme: (AppTheme) -> Unit) {
                             onGoalClick = { goalDialog = it; goalDialogOpen = true },
                             onSetBudget = { amountTarget = AmountTarget.Budget },
                             onOpenCard = { card = it; sub = Sub.CARD },
+                            onEditBalance = { b, cur -> secureBalance(b, cur) },
                         )
                         Tab.STATS -> StatsScreen(transactions)
                         Tab.CATEGORIES -> CategoriesScreen(
                             transactions, balances, limits, budget,
                             onEditLimit = { c, cur -> amountTarget = AmountTarget.Limit(c, cur) },
-                            onEditBalance = { b, cur -> amountTarget = AmountTarget.BankBalance(b, cur) },
+                            onEditBalance = { b, cur -> secureBalance(b, cur) },
                             onEditBudget = { amountTarget = AmountTarget.Budget },
                         )
                         Tab.REPORT -> ReportScreen(transactions)

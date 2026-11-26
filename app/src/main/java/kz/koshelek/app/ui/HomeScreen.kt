@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,6 +51,7 @@ fun HomeScreen(
     onGoalClick: (Goal?) -> Unit,
     onSetBudget: () -> Unit,
     onOpenCard: (String) -> Unit,
+    onEditBalance: (String, Double?) -> Unit,
 ) {
     val p = LocalPalette.current
     val hasAccess = rememberNotificationAccess()
@@ -103,7 +105,8 @@ fun HomeScreen(
                 walletsOf(balances).chunked(2).forEach { pair ->
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         pair.forEach { bank ->
-                            CardTile(bank, balances.firstOrNull { it.bank == bank }, ::m, Modifier.weight(1f)) { onOpenCard(bank) }
+                            val bal = balances.firstOrNull { it.bank == bank }
+                            CardTile(bank, bal, ::m, Modifier.weight(1f), onEdit = { onEditBalance(bank, bal?.amount) }) { onOpenCard(bank) }
                         }
                         if (pair.size == 1) Spacer(Modifier.weight(1f))
                     }
@@ -179,7 +182,7 @@ fun HomeScreen(
 
 /** Мини-карта: цвет банка, остаток и снизу название карты. */
 @Composable
-private fun CardTile(bank: String, b: Balance?, m: (Double) -> String, modifier: Modifier, onClick: () -> Unit) {
+private fun CardTile(bank: String, b: Balance?, m: (Double) -> String, modifier: Modifier, onEdit: () -> Unit, onClick: () -> Unit) {
     val p = LocalPalette.current
     val c = p.bankColor(bank)
     val on = onColor(c)
@@ -188,7 +191,13 @@ private fun CardTile(bank: String, b: Balance?, m: (Double) -> String, modifier:
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(b?.let { m(it.amount) } ?: "нет данных", color = on, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(b?.let { m(it.amount) } ?: "нет данных", color = on, fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, maxLines = 1, modifier = Modifier.weight(1f))
+            androidx.compose.foundation.layout.Box(
+                Modifier.size(30.dp).clip(androidx.compose.foundation.shape.CircleShape).background(on.copy(alpha = 0.18f)).clickable(onClick = onEdit),
+                contentAlignment = Alignment.Center,
+            ) { Icon(AppIcons.Pencil, "Изменить остаток", tint = on, modifier = Modifier.size(16.dp)) }
+        }
         Column {
             Text(AppSettings.walletName(bank), color = on, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
             Text(b?.let { formatTime(it.updatedAt, dateTimeFormat) } ?: "остаток не пришёл", color = on.copy(alpha = 0.75f), fontSize = 10.sp, maxLines = 1)

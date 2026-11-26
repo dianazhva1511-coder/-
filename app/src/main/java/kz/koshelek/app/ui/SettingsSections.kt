@@ -82,6 +82,24 @@ fun SettingsSections(repo: Repository) {
         }
     }
 
+    // Защита
+    Section("Защита")
+    PCard(padding = 12.dp) {
+        val can = Biometric.available(context)
+        ToggleRow(
+            "Вход по отпечатку", if (can) "Приложение попросит отпечаток при открытии" else "На телефоне не настроен отпечаток или PIN",
+            AppSettings.lockEnabled,
+            onToggle = { on ->
+                val act = context.findActivity()
+                if (act == null) AppSettings.changeLock(on)
+                else Biometric.ask(act, if (on) "Включить вход по отпечатку" else "Выключить вход по отпечатку", "Подтвердите отпечатком", onSuccess = { AppSettings.changeLock(on) })
+            },
+            onDelete = null,
+            leading = { CircleIcon(AppIcons.Fingerprint, p.primary, 32.dp) },
+        )
+        Text("Изменить остаток карты вручную можно только после отпечатка.", color = p.text2, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
+    }
+
     // Размер шрифта
     Section("Размер шрифта")
     PCard {
