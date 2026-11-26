@@ -150,12 +150,6 @@ fun App(prefs: Prefs, theme: AppTheme, onTheme: (AppTheme) -> Unit) {
     val repo = remember { Repository(context.applicationContext) }
     val scope = rememberCoroutineScope()
     val activity = context.findActivity()
-    /** Изменить остаток можно только после отпечатка. */
-    fun secureBalance(bank: String, current: Double?) {
-        val open = { amountTarget = AmountTarget.BankBalance(bank, current) }
-        if (activity == null) open()
-        else Biometric.ask(activity, "Изменить остаток", "Подтвердите отпечатком: ${AppSettings.walletName(bank)}", onSuccess = open)
-    }
 
     val transactions by repo.transactions.collectAsState(initial = emptyList())
     val log by repo.rawNotifications.collectAsState(initial = emptyList())
@@ -172,6 +166,12 @@ fun App(prefs: Prefs, theme: AppTheme, onTheme: (AppTheme) -> Unit) {
     var goalDialog by remember { mutableStateOf<Goal?>(null) }
     var goalDialogOpen by remember { mutableStateOf(false) }
     var amountTarget by remember { mutableStateOf<AmountTarget?>(null) }
+    /** Изменить остаток можно только после отпечатка. */
+    fun secureBalance(bank: String, current: Double?) {
+        val open = { amountTarget = AmountTarget.BankBalance(bank, current) }
+        if (activity == null) open()
+        else Biometric.ask(activity, "Изменить остаток", "Подтвердите отпечатком: ${AppSettings.walletName(bank)}", onSuccess = open)
+    }
 
     BackHandler(enabled = sub != Sub.NONE) { sub = if (sub == Sub.LOG) Sub.SETTINGS else Sub.NONE }
     BackHandler(enabled = sub == Sub.NONE && tab != Tab.HOME) { tab = Tab.HOME }
