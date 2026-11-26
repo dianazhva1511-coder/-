@@ -139,6 +139,7 @@ private val categoryIndex = mapOf(
 )
 
 fun Palette.colorOf(category: String): Color =
+    kz.koshelek.app.data.AppSettings.categoryColors[category]?.let { Color(it) } ?:
     categoryColors[(categoryIndex[category] ?: (category.hashCode() and 0x7fffffff)) % categoryColors.size]
 
 /** Цвет значка на заливке категории: тёмный на светлых неоновых, белый на насыщенных. */

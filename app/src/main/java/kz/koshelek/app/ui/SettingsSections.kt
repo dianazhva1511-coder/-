@@ -3,7 +3,10 @@ package kz.koshelek.app.ui
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -54,6 +57,7 @@ fun SettingsSections(repo: Repository) {
     val scope = rememberCoroutineScope()
     var askName by remember { mutableStateOf<String?>(null) } // "wallet", "expense", "income"
     var renaming by remember { mutableStateOf<String?>(null) }
+    var styling by remember { mutableStateOf<String?>(null) }
     var ruleOpen by remember { mutableStateOf(false) }
     var confirmReset by remember { mutableStateOf(false) }
     var catTab by remember { mutableIntStateOf(0) }
@@ -157,6 +161,7 @@ fun SettingsSections(repo: Repository) {
     // Категории
     Section("Категории", "+ Добавить") { askName = if (catTab == 0) "expense" else "income" }
     Segmented(listOf("Расходы", "Доходы"), catTab) { catTab = it }
+    Text("Карандаш меняет значок и цвет категории.", color = p.text2, fontSize = 12.sp, modifier = Modifier.padding(start = 4.dp))
     PCard(padding = 12.dp) {
         val base = (if (catTab == 0) Categories.expense else Categories.income).filter { it != Categories.OWN }
         val custom = if (catTab == 0) AppSettings.customExpense else AppSettings.customIncome
@@ -167,6 +172,7 @@ fun SettingsSections(repo: Repository) {
                 c, if (isCustom) "своя категория" else null, c !in AppSettings.hiddenCategories,
                 onToggle = { AppSettings.setCategoryHidden(c, !it) },
                 onDelete = if (isCustom) ({ AppSettings.removeCategory(c) }) else null,
+                onEdit = { styling = c },
                 leading = { CircleIcon(iconOf(c), p.colorOf(c), 32.dp) },
             )
         }
@@ -234,6 +240,7 @@ fun SettingsSections(repo: Repository) {
             AppSettings.renameWallet(w, name); renaming = null
         }
     }
+    styling?.let { c -> CategoryStyleDialog(c, onDismiss = { styling = null }) }
     if (ruleOpen) RuleDialog(onDismiss = { ruleOpen = false }) { k, c -> AppSettings.addRule(k, c); ruleOpen = false }
     if (confirmReset) AlertDialog(
         onDismissRequest = { confirmReset = false },
@@ -326,3 +333,71 @@ private fun RuleDialog(onDismiss: () -> Unit, onSave: (String, String) -> Unit) 
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
     )
 }
+
+/** Цвета на выбор для категорий. */
+private val StyleColors = listOf(
+    0xFFFA114F, 0xFFFF6B3D, 0xFFFF9F0A, 0xFFFFD60A, 0xFFA6FF00, 0xFF30D158, 0xFF00E5F0, 0xFF0A84FF,
+    0xFF5E5CE6, 0xFFBF5AF2, 0xFFFF4F9A, 0xFFAC8E68, 0xFF8E8E93, 0xFF127A63, 0xFFE4002B, 0xFFFFFFFF,
+)
+
+@Composable
+private fun CategoryStyleDialog(category: String, onDismiss: () -> Unit) {
+    val p = LocalPalette.current
+    var icon by remember { mutableStateOf(AppSettings.categoryIcons[category]) }
+    var color by remember { mutableStateOf(AppSettings.categoryColors[category]) }
+    val shownIcon = icon?.let { k -> CategoryIconChoices.firstOrNull { it.first == k }?.second } ?: iconOf(category)
+    val shownColor = color?.let { androidx.compose.ui.graphics.Color(it) } ?: p.colorOf(category)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircleIcon(shownIcon, shownColor, 40.dp)
+                Spacer(Modifier.width(12.dp))
+                Text(category, maxLines = 1)
+            }
+        },
+        text = {
+            Column(Modifier.androidx_verticalScroll(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Значок", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                CategoryIconChoices.chunked(6).forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        row.forEach { (key, img) ->
+                            val sel = key == icon
+                            androidx.compose.foundation.layout.Box(
+                                Modifier.size(38.dp).androidx_clip()
+                                    .androidx_bg(if (sel) shownColor else p.chip)
+                                    .clickable { icon = key },
+                                contentAlignment = Alignment.Center,
+                            ) { Icon(img, null, tint = if (sel) onColor(shownColor) else p.text, modifier = Modifier.size(20.dp)) }
+                        }
+                    }
+                }
+                Text("Цвет", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
+                StyleColors.chunked(8).forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        row.forEach { c ->
+                            val sel = c == color
+                            androidx.compose.foundation.layout.Box(
+                                Modifier.size(28.dp).androidx_clip().androidx_bg(androidx.compose.ui.graphics.Color(c))
+                                    .clickable { color = c },
+                                contentAlignment = Alignment.Center,
+                            ) { if (sel) Text("✓", color = onColor(androidx.compose.ui.graphics.Color(c)), fontWeight = FontWeight.Bold, fontSize = 14.sp) }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { AppSettings.setCategoryStyle(category, icon, color); onDismiss() }) { Text("Сохранить") } },
+        dismissButton = {
+            Row {
+                TextButton(onClick = { AppSettings.setCategoryStyle(category, null, null); onDismiss() }) { Text("Как было") }
+                TextButton(onClick = onDismiss) { Text("Отмена") }
+            }
+        },
+    )
+}
+
+private fun Modifier.androidx_clip() = this.then(Modifier.clip(androidx.compose.foundation.shape.CircleShape))
+private fun Modifier.androidx_bg(c: androidx.compose.ui.graphics.Color) = this.then(Modifier.background(c))
+@Composable
+private fun Modifier.androidx_verticalScroll() = this.then(Modifier.verticalScroll(rememberScrollState()))

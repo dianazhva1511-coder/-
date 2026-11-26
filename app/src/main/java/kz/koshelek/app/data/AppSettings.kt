@@ -36,6 +36,8 @@ object AppSettings {
     var walletNames by mutableStateOf(mapOf<String, String>()); private set
     var fontScale by mutableFloatStateOf(1f); private set
     var lockEnabled by mutableStateOf(true); private set
+    var categoryIcons by mutableStateOf(mapOf<String, String>()); private set
+    var categoryColors by mutableStateOf(mapOf<String, Long>()); private set
 
     fun init(context: Context) {
         if (sp != null) return
@@ -58,10 +60,25 @@ object AppSettings {
         }.toMap()
         fontScale = s.getFloat("fontScale", 1f).coerceIn(0.8f, 1.4f)
         lockEnabled = s.getBoolean("lockEnabled", true)
+        categoryIcons = s.pairs("categoryIcons").toMap()
+        categoryColors = s.pairs("categoryColors").mapNotNull { (k, v) -> v.toLongOrNull()?.let { k to it } }.toMap()
     }
 
     private fun SharedPreferences.list(key: String): List<String> =
         getString(key, null)?.split('\n')?.filter { it.isNotBlank() } ?: emptyList()
+
+    private fun SharedPreferences.pairs(key: String): List<Pair<String, String>> = list(key).mapNotNull { line ->
+        val parts = line.split('\t')
+        if (parts.size == 2) parts[0] to parts[1] else null
+    }
+
+    /** Свой значок и цвет категории (null — вернуть как было). */
+    fun setCategoryStyle(category: String, icon: String?, color: Long?) {
+        categoryIcons = if (icon == null) categoryIcons - category else categoryIcons + (category to icon)
+        categoryColors = if (color == null) categoryColors - category else categoryColors + (category to color)
+        save("categoryIcons", categoryIcons.map { "${it.key}\t${it.value}" })
+        save("categoryColors", categoryColors.map { "${it.key}\t${it.value}" })
+    }
 
     private fun save(key: String, values: Collection<String>) {
         sp?.edit()?.putString(key, values.joinToString("\n"))?.apply()

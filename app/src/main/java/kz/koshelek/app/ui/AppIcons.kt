@@ -66,10 +66,40 @@ object AppIcons {
     val Eye = icon("eye", "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z", c(12f, 12f, 3f))
     val Home2 = icon("house", "M4 11l8-7 8 7v9H4z", "M10 20v-5h4v5")
     val PaletteIcon = icon("palette", c(12f, 12f, 9f), c(8f, 10f, 1f), c(12f, 7.5f, 1f), c(16f, 10f, 1f))
+    val Gift = icon("gift", "M4 10h16v10H4z", "M3 7h18v3H3z", "M12 7v13", "M12 7c-2-4-6-3-5 0M12 7c2-4 6-3 5 0")
+    val Book = icon("book", "M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z", "M5 17a3 3 0 0 1 3-3h10")
+    val Plane = icon("plane", "M3 13l18-7-7 18-2.5-7.5z", "M11.5 16.5L21 6")
+    val Paw = icon("paw", c(7f, 9f, 1.8f), c(12f, 6.5f, 1.8f), c(17f, 9f, 1.8f), "M8 17c0-3 2-5 4-5s4 2 4 5c0 2-2 2.5-4 2.5S8 19 8 17z")
+    val Dumbbell = icon("dumbbell", "M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12")
+    val Phone = icon("phone", "M8 3h8a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z", "M11 18h2")
+    val Fuel = icon("fuel", "M5 20V5a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v15H5z", "M5 10h9", "M14 8l3 2v7a1.5 1.5 0 0 0 3 0V9l-2-2")
+    val Shirt = icon("shirt", "M8 4l-5 3 2 4 2-1v10h10V10l2 1 2-4-5-3a4 4 0 0 1-8 0z")
+    val Star = icon("star", "M12 3l2.8 5.8 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.7l6.2-.9z")
+    val Music = icon("music", "M9 18V5l11-2v13", c(6.5f, 18f, 2.5f), c(17.5f, 16f, 2.5f))
+    val Baby = icon("baby", c(12f, 12f, 8f), c(9.5f, 11f, 0.6f), c(14.5f, 11f, 0.6f), "M10 15a3 3 0 0 0 4 0")
+    val Tool = icon("tool", "M14 6a4 4 0 0 0 5 5l-9 9-3-3 9-9a4 4 0 0 1-2-2z")
 }
 
+/** Значки, из которых пользователь выбирает значок своей категории. */
+val CategoryIconChoices: List<Pair<String, androidx.compose.ui.graphics.vector.ImageVector>> = listOf(
+    "cart" to AppIcons.Cart, "coffee" to AppIcons.Coffee, "car" to AppIcons.Car, "bus" to AppIcons.Bus,
+    "bag" to AppIcons.Bag, "wifi" to AppIcons.Wifi, "house" to AppIcons.Home2, "heart" to AppIcons.Heart,
+    "play" to AppIcons.Play, "transfer" to AppIcons.Transfer, "refresh" to AppIcons.Refresh, "briefcase" to AppIcons.Briefcase,
+    "down" to AppIcons.Down, "wallet" to AppIcons.Wallet, "target" to AppIcons.Target, "gift" to AppIcons.Gift,
+    "book" to AppIcons.Book, "plane" to AppIcons.Plane, "paw" to AppIcons.Paw, "dumbbell" to AppIcons.Dumbbell,
+    "phone" to AppIcons.Phone, "fuel" to AppIcons.Fuel, "shirt" to AppIcons.Shirt, "star" to AppIcons.Star,
+    "music" to AppIcons.Music, "baby" to AppIcons.Baby, "tool" to AppIcons.Tool, "dots" to AppIcons.Dots,
+)
+
 /** Значок категории. */
-fun iconOf(category: String) = when (category) {
+fun iconOf(category: String): androidx.compose.ui.graphics.vector.ImageVector {
+    kz.koshelek.app.data.AppSettings.categoryIcons[category]?.let { key ->
+        CategoryIconChoices.firstOrNull { it.first == key }?.let { return it.second }
+    }
+    return defaultIconOf(category)
+}
+
+private fun defaultIconOf(category: String) = when (category) {
     "Продукты" -> AppIcons.Cart
     "Кафе и рестораны" -> AppIcons.Coffee
     "Такси" -> AppIcons.Car
