@@ -100,6 +100,8 @@ fun HomeScreen(
             )
             if (balances.isEmpty() && !showCards) {
                 Text("Остаток появится после первой операции по карте", color = p.heroText2, fontSize = 13.sp)
+            } else if (!showCards) {
+                Text("Сумма остатков по картам. Нажмите, чтобы увидеть каждую", color = p.heroText2, fontSize = 12.sp)
             }
             if (showCards) {
                 walletsOf(balances).chunked(2).forEach { pair ->

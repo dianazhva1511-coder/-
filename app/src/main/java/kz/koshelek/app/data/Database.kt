@@ -91,6 +91,9 @@ interface ExtrasDao {
     @Query("SELECT * FROM balances ORDER BY bank")
     fun balances(): Flow<List<Balance>>
 
+    @Query("SELECT * FROM balances WHERE bank = :bank")
+    suspend fun balance(bank: String): Balance?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun setBalance(b: Balance)
 }
@@ -114,6 +117,9 @@ interface TransactionDao {
 
     @Query("DELETE FROM transactions")
     suspend fun deleteAll()
+
+    @Query("SELECT * FROM transactions WHERE id = :id")
+    suspend fun byId(id: Long): Transaction?
 }
 
 @Dao
