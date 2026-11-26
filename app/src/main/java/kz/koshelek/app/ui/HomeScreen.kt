@@ -55,7 +55,7 @@ fun HomeScreen(
 ) {
     val p = LocalPalette.current
     val hasAccess = rememberNotificationAccess()
-    var hidden by remember { mutableStateOf(false) }
+    val hidden = AppSettings.amountsHidden
     var showCards by remember { mutableStateOf(false) }
     val month = AppSettings.currentPeriod()
     val inMonth = all.inMonth(month).filter { it.counts }
@@ -73,7 +73,9 @@ fun HomeScreen(
                 Text(LocalDate.now().format(headerDate).uppercase(Ru), color = p.text2, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 Text("Сводка", color = p.text, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
             }
-            IconButton(onClick = { hidden = !hidden }) { Icon(AppIcons.Eye, "Скрыть суммы", tint = p.text) }
+            IconButton(onClick = { AppSettings.amountsHidden = !hidden }) {
+                Icon(if (hidden) AppIcons.EyeOff else AppIcons.Eye, if (hidden) "Показать суммы" else "Скрыть суммы", tint = if (hidden) p.text2 else p.text)
+            }
             IconButton(onClick = onOpenSettings) { Icon(AppIcons.Gear, "Настройки", tint = p.text) }
         }
 

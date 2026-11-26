@@ -85,6 +85,16 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val prefs = Prefs(this)
+        // Если приложение упадёт, сохраняем причину: её видно в Настройки → Журнал
+        val previous = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, e ->
+            runCatching {
+                getSharedPreferences("koshelek", MODE_PRIVATE).edit()
+                    .putString("lastCrash", "v${packageManager.getPackageInfo(packageName, 0).versionName} · ${java.util.Date()}\n" + e.stackTraceToString().take(4000))
+                    .commit()
+            }
+            previous?.uncaughtException(thread, e)
+        }
         AppSettings.init(this)
         locked = lockNeeded()
         applyBars(prefs.theme)
@@ -185,7 +195,7 @@ fun App(prefs: Prefs, theme: AppTheme, onTheme: (AppTheme) -> Unit) {
                         theme, budget, onTheme, onBudget = { amountTarget = AmountTarget.Budget },
                         onOpenLog = { sub = Sub.LOG }, onBack = { sub = Sub.NONE }, repo = repo,
                     )
-                    Sub.LOG -> LogScreen(log, repo, onBack = { sub = Sub.SETTINGS })
+                    Sub.LOG -> LogScreen(log, repo, prefs, onBack = { sub = Sub.SETTINGS })
                     Sub.CARD -> {
                         val bal = balances.firstOrNull { it.bank == card }
                         CardScreen(

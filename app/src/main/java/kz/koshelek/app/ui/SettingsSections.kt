@@ -4,6 +4,12 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
@@ -343,61 +349,55 @@ private val StyleColors = listOf(
 @Composable
 private fun CategoryStyleDialog(category: String, onDismiss: () -> Unit) {
     val p = LocalPalette.current
-    var icon by remember { mutableStateOf(AppSettings.categoryIcons[category]) }
-    var color by remember { mutableStateOf(AppSettings.categoryColors[category]) }
+    var icon by remember { mutableStateOf<String?>(AppSettings.categoryIcons[category]) }
+    var color by remember { mutableStateOf<Long?>(AppSettings.categoryColors[category]) }
     val shownIcon = icon?.let { k -> CategoryIconChoices.firstOrNull { it.first == k }?.second } ?: iconOf(category)
-    val shownColor = color?.let { androidx.compose.ui.graphics.Color(it) } ?: p.colorOf(category)
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CircleIcon(shownIcon, shownColor, 40.dp)
-                Spacer(Modifier.width(12.dp))
-                Text(category, maxLines = 1)
-            }
-        },
-        text = {
-            Column(Modifier.androidx_verticalScroll(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Значок", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                CategoryIconChoices.chunked(6).forEach { row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        row.forEach { (key, img) ->
-                            val sel = key == icon
-                            androidx.compose.foundation.layout.Box(
-                                Modifier.size(38.dp).androidx_clip()
-                                    .androidx_bg(if (sel) shownColor else p.chip)
-                                    .clickable { icon = key },
-                                contentAlignment = Alignment.Center,
-                            ) { Icon(img, null, tint = if (sel) onColor(shownColor) else p.text, modifier = Modifier.size(20.dp)) }
-                        }
-                    }
-                }
-                Text("Цвет", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 6.dp))
-                StyleColors.chunked(8).forEach { row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        row.forEach { c ->
-                            val sel = c == color
-                            androidx.compose.foundation.layout.Box(
-                                Modifier.size(28.dp).androidx_clip().androidx_bg(androidx.compose.ui.graphics.Color(c))
-                                    .clickable { color = c },
-                                contentAlignment = Alignment.Center,
-                            ) { if (sel) Text("✓", color = onColor(androidx.compose.ui.graphics.Color(c)), fontWeight = FontWeight.Bold, fontSize = 14.sp) }
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = { AppSettings.setCategoryStyle(category, icon, color); onDismiss() }) { Text("Сохранить") } },
-        dismissButton = {
-            Row {
-                TextButton(onClick = { AppSettings.setCategoryStyle(category, null, null); onDismiss() }) { Text("Как было") }
-                TextButton(onClick = onDismiss) { Text("Отмена") }
-            }
-        },
-    )
-}
+    val shownColor = color?.let { Color(it) } ?: p.colorOf(category)
+    val surface = if (p.dark) Color(0xFF1C1C1E) else Color.White
 
-private fun Modifier.androidx_clip() = this.then(Modifier.clip(androidx.compose.foundation.shape.CircleShape))
-private fun Modifier.androidx_bg(c: androidx.compose.ui.graphics.Color) = this.then(Modifier.background(c))
-@Composable
-private fun Modifier.androidx_verticalScroll() = this.then(Modifier.verticalScroll(rememberScrollState()))
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(surface).padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircleIcon(shownIcon, shownColor, 44.dp)
+                Spacer(Modifier.width(12.dp))
+                Text(category, color = p.text, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+            Text("Значок", color = p.text2, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            CategoryIconChoices.chunked(7).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    row.forEach { (key, img) ->
+                        val sel = key == icon
+                        Box(
+                            Modifier.size(34.dp).clip(CircleShape).background(if (sel) shownColor else p.chip).clickable { icon = key },
+                            contentAlignment = Alignment.Center,
+                        ) { Icon(img, null, tint = if (sel) onColor(shownColor) else p.text, modifier = Modifier.size(18.dp)) }
+                    }
+                    repeat(7 - row.size) { Spacer(Modifier.size(34.dp)) }
+                }
+            }
+            Text("Цвет", color = p.text2, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            StyleColors.chunked(8).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    row.forEach { c ->
+                        val cc = Color(c)
+                        Box(
+                            Modifier.size(28.dp).clip(CircleShape).background(cc)
+                                .border(if (c == color) 3.dp else 0.dp, if (c == color) p.text else Color.Transparent, CircleShape)
+                                .clickable { color = c },
+                        )
+                    }
+                }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = { AppSettings.setCategoryStyle(category, null, null); onDismiss() }) { Text("Как было", color = p.text2) }
+                TextButton(onClick = onDismiss) { Text("Отмена", color = p.text2) }
+                TextButton(onClick = { AppSettings.setCategoryStyle(category, icon, color); onDismiss() }) {
+                    Text("Сохранить", color = p.primary, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}

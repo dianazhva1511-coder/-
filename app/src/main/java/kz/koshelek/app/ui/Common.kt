@@ -82,6 +82,10 @@ class Prefs(context: Context) {
             .getOrDefault(AppTheme.BLACK)
         set(v) = sp.edit().putString("theme", v.name).apply()
 
+    var lastCrash: String?
+        get() = sp.getString("lastCrash", null)
+        set(v) = sp.edit().putString("lastCrash", v).apply()
+
     var budget: Double
         get() = sp.getFloat("budget", 0f).toDouble()
         set(v) = sp.edit().putFloat("budget", v.toFloat()).apply()

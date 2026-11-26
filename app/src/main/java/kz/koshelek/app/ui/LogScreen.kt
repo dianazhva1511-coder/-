@@ -17,6 +17,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,10 +32,11 @@ import kz.koshelek.app.data.Repository
 
 /** Все уведомления от банков, которые увидело приложение, и что с ними сделано. */
 @Composable
-fun LogScreen(log: List<RawNotification>, repo: Repository, onBack: () -> Unit) {
+fun LogScreen(log: List<RawNotification>, repo: Repository, prefs: Prefs, onBack: () -> Unit) {
     val p = LocalPalette.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    var crash by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(prefs.lastCrash) }
 
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -53,6 +56,18 @@ fun LogScreen(log: List<RawNotification>, repo: Repository, onBack: () -> Unit) 
             Row(Modifier.padding(top = 4.dp)) {
                 TextButton(onClick = { copy(context, log.joinToString("\n\n") { it.asText() }) }) { Text("Скопировать всё", color = p.primary) }
                 TextButton(onClick = { scope.launch { repo.clearLog() } }) { Text("Очистить", color = p.text2) }
+            }
+        }
+        crash?.let { c ->
+            item {
+                PCard(Modifier.fillMaxWidth(), padding = 12.dp) {
+                    Text("Последняя ошибка приложения", color = p.expense, fontWeight = FontWeight.Bold)
+                    Text(c.take(600), color = p.text2, fontSize = 11.sp)
+                    Row {
+                        TextButton(onClick = { copy(context, c) }) { Text("Скопировать", color = p.primary) }
+                        TextButton(onClick = { prefs.lastCrash = null; crash = null }) { Text("Убрать", color = p.text2) }
+                    }
+                }
             }
         }
         if (log.isEmpty()) item { Text("Пока ничего не пришло.", color = p.text2) }

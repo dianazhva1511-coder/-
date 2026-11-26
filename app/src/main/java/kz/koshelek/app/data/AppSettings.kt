@@ -36,6 +36,8 @@ object AppSettings {
     var walletNames by mutableStateOf(mapOf<String, String>()); private set
     var fontScale by mutableFloatStateOf(1f); private set
     var lockEnabled by mutableStateOf(true); private set
+    /** Суммы на главной скрыты при каждом запуске, пока не нажать на глаз. */
+    var amountsHidden by mutableStateOf(true)
     var categoryIcons by mutableStateOf(mapOf<String, String>()); private set
     var categoryColors by mutableStateOf(mapOf<String, Long>()); private set
 
