@@ -82,7 +82,9 @@ object AppIcons {
 }
 
 /** Значки, из которых пользователь выбирает значок своей категории. */
-val CategoryIconChoices: List<Pair<String, androidx.compose.ui.graphics.vector.ImageVector>> = listOf(
+// lazy обязателен: иначе список создаётся, пока AppIcons ещё не готов, и в нём оказываются пустые значки (из-за этого был вылет)
+val CategoryIconChoices: List<Pair<String, androidx.compose.ui.graphics.vector.ImageVector>> by lazy {
+    listOf(
     "cart" to AppIcons.Cart, "coffee" to AppIcons.Coffee, "car" to AppIcons.Car, "bus" to AppIcons.Bus,
     "bag" to AppIcons.Bag, "wifi" to AppIcons.Wifi, "house" to AppIcons.Home2, "heart" to AppIcons.Heart,
     "play" to AppIcons.Play, "transfer" to AppIcons.Transfer, "refresh" to AppIcons.Refresh, "briefcase" to AppIcons.Briefcase,
@@ -91,6 +93,7 @@ val CategoryIconChoices: List<Pair<String, androidx.compose.ui.graphics.vector.I
     "phone" to AppIcons.Phone, "fuel" to AppIcons.Fuel, "shirt" to AppIcons.Shirt, "star" to AppIcons.Star,
     "music" to AppIcons.Music, "baby" to AppIcons.Baby, "tool" to AppIcons.Tool, "dots" to AppIcons.Dots,
 )
+}
 
 /** Значок категории. */
 fun iconOf(category: String): androidx.compose.ui.graphics.vector.ImageVector {
